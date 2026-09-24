@@ -1,0 +1,13 @@
+# Google Meet Media Server (IPv4 + IPv6)
+# Quelle: https://support.google.com/a/answer/1279090
+# Abschnitt "Allow access to Google IP address ranges", Stand: 2026-09-24
+#
+# Google Workspace
+74.125.250.0/24
+74.125.247.128/32
+2001:4860:4864:5::/64
+2001:4860:4864:4:8000::/128
+#
+# Consumer (private Google-Konten)
+142.250.82.0/24
+2001:4860:4864:6::/64
