@@ -1,0 +1,47 @@
+name: Update IP lists
+
+on:
+  schedule:
+    - cron: "17 5 * * *"   # taeglich 05:17 UTC
+  workflow_dispatch:        # manuell ueber "Run workflow" startbar
+
+permissions:
+  contents: write           # noetig, damit der Workflow zurueck pushen darf
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Listen aktualisieren
+        id: update
+        run: |
+          set +e
+          python3 scripts/update_ip_lists.py
+          echo "rc=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Aenderungen committen
+        run: |
+          if [ -z "$(git status --porcelain lists/)" ]; then
+            echo "Keine Aenderungen."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lists/
+          git commit -m "IP-Listen aktualisiert: $(git diff --cached --name-only | xargs -n1 basename | tr '\n' ' ')"
+          git push
+
+      # Erst am Ende fehlschlagen, damit erfolgreich aktualisierte Listen
+      # trotzdem gepusht werden, der Lauf aber rot markiert ist
+      # (GitHub schickt dann eine Mail).
+      - name: Fehler melden
+        if: steps.update.outputs.rc != '0'
+        run: |
+          echo "::error::Mindestens eine Quelle konnte nicht aktualisiert werden, siehe Log oben."
+          exit 1
